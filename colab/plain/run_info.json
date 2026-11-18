@@ -1,0 +1,9 @@
+{
+ "name": "plain",
+ "options": "--no_exposure",
+ "iterations": 30000,
+ "resolution": 2,
+ "train_minutes": 57.6,
+ "gaussians": 2347189,
+ "gpu": "Tesla T4"
+}

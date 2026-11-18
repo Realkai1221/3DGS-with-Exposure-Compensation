@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Too large for GitHub: the source videos and the dataset (kept on iCloud and Google Drive)
+videos/
+*.MOV
+*.mov
+colab/room.zip
+
+# Archives made from the folders here (for Colab and Overleaf)
+*.zip
+
+# Earlier copy of the paper folder, superseded by exposure-3dgs-latex-v2
+exposure-3dgs-latex/
+
+# Starting point cloud of each run (made from the dataset)
+colab/*/input.ply
+
+# Output of analysis/compare_runs.py
+analysis/output/

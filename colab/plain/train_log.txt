@@ -1,0 +1,363 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794786056.285925   13411 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1794786058.938061   13411 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Optimizing /content/output/plain
+Output folder: /content/output/plain [15/11 23:41:01]
+Reading camera 1/324
+Reading camera 2/324
+Reading camera 3/324
+Reading camera 4/324
+Reading camera 5/324
+Reading camera 6/324
+Reading camera 7/324
+Reading camera 8/324
+Reading camera 9/324
+Reading camera 10/324
+Reading camera 11/324
+Reading camera 12/324
+Reading camera 13/324
+Reading camera 14/324
+Reading camera 15/324
+Reading camera 16/324
+Reading camera 17/324
+Reading camera 18/324
+Reading camera 19/324
+Reading camera 20/324
+Reading camera 21/324
+Reading camera 22/324
+Reading camera 23/324
+Reading camera 24/324
+Reading camera 25/324
+Reading camera 26/324
+Reading camera 27/324
+Reading camera 28/324
+Reading camera 29/324
+Reading camera 30/324
+Reading camera 31/324
+Reading camera 32/324
+Reading camera 33/324
+Reading camera 34/324
+Reading camera 35/324
+Reading camera 36/324
+Reading camera 37/324
+Reading camera 38/324
+Reading camera 39/324
+Reading camera 40/324
+Reading camera 41/324
+Reading camera 42/324
+Reading camera 43/324
+Reading camera 44/324
+Reading camera 45/324
+Reading camera 46/324
+Reading camera 47/324
+Reading camera 48/324
+Reading camera 49/324
+Reading camera 50/324
+Reading camera 51/324
+Reading camera 52/324
+Reading camera 53/324
+Reading camera 54/324
+Reading camera 55/324
+Reading camera 56/324
+Reading camera 57/324
+Reading camera 58/324
+Reading camera 59/324
+Reading camera 60/324
+Reading camera 61/324
+Reading camera 62/324
+Reading camera 63/324
+Reading camera 64/324
+Reading camera 65/324
+Reading camera 66/324
+Reading camera 67/324
+Reading camera 68/324
+Reading camera 69/324
+Reading camera 70/324
+Reading camera 71/324
+Reading camera 72/324
+Reading camera 73/324
+Reading camera 74/324
+Reading camera 75/324
+Reading camera 76/324
+Reading camera 77/324
+Reading camera 78/324
+Reading camera 79/324
+Reading camera 80/324
+Reading camera 81/324
+Reading camera 82/324
+Reading camera 83/324
+Reading camera 84/324
+Reading camera 85/324
+Reading camera 86/324
+Reading camera 87/324
+Reading camera 88/324
+Reading camera 89/324
+Reading camera 90/324
+Reading camera 91/324
+Reading camera 92/324
+Reading camera 93/324
+Reading camera 94/324
+Reading camera 95/324
+Reading camera 96/324
+Reading camera 97/324
+Reading camera 98/324
+Reading camera 99/324
+Reading camera 100/324
+Reading camera 101/324
+Reading camera 102/324
+Reading camera 103/324
+Reading camera 104/324
+Reading camera 105/324
+Reading camera 106/324
+Reading camera 107/324
+Reading camera 108/324
+Reading camera 109/324
+Reading camera 110/324
+Reading camera 111/324
+Reading camera 112/324
+Reading camera 113/324
+Reading camera 114/324
+Reading camera 115/324
+Reading camera 116/324
+Reading camera 117/324
+Reading camera 118/324
+Reading camera 119/324
+Reading camera 120/324
+Reading camera 121/324
+Reading camera 122/324
+Reading camera 123/324
+Reading camera 124/324
+Reading camera 125/324
+Reading camera 126/324
+Reading camera 127/324
+Reading camera 128/324
+Reading camera 129/324
+Reading camera 130/324
+Reading camera 131/324
+Reading camera 132/324
+Reading camera 133/324
+Reading camera 134/324
+Reading camera 135/324
+Reading camera 136/324
+Reading camera 137/324
+Reading camera 138/324
+Reading camera 139/324
+Reading camera 140/324
+Reading camera 141/324
+Reading camera 142/324
+Reading camera 143/324
+Reading camera 144/324
+Reading camera 145/324
+Reading camera 146/324
+Reading camera 147/324
+Reading camera 148/324
+Reading camera 149/324
+Reading camera 150/324
+Reading camera 151/324
+Reading camera 152/324
+Reading camera 153/324
+Reading camera 154/324
+Reading camera 155/324
+Reading camera 156/324
+Reading camera 157/324
+Reading camera 158/324
+Reading camera 159/324
+Reading camera 160/324
+Reading camera 161/324
+Reading camera 162/324
+Reading camera 163/324
+Reading camera 164/324
+Reading camera 165/324
+Reading camera 166/324
+Reading camera 167/324
+Reading camera 168/324
+Reading camera 169/324
+Reading camera 170/324
+Reading camera 171/324
+Reading camera 172/324
+Reading camera 173/324
+Reading camera 174/324
+Reading camera 175/324
+Reading camera 176/324
+Reading camera 177/324
+Reading camera 178/324
+Reading camera 179/324
+Reading camera 180/324
+Reading camera 181/324
+Reading camera 182/324
+Reading camera 183/324
+Reading camera 184/324
+Reading camera 185/324
+Reading camera 186/324
+Reading camera 187/324
+Reading camera 188/324
+Reading camera 189/324
+Reading camera 190/324
+Reading camera 191/324
+Reading camera 192/324
+Reading camera 193/324
+Reading camera 194/324
+Reading camera 195/324
+Reading camera 196/324
+Reading camera 197/324
+Reading camera 198/324
+Reading camera 199/324
+Reading camera 200/324
+Reading camera 201/324
+Reading camera 202/324
+Reading camera 203/324
+Reading camera 204/324
+Reading camera 205/324
+Reading camera 206/324
+Reading camera 207/324
+Reading camera 208/324
+Reading camera 209/324
+Reading camera 210/324
+Reading camera 211/324
+Reading camera 212/324
+Reading camera 213/324
+Reading camera 214/324
+Reading camera 215/324
+Reading camera 216/324
+Reading camera 217/324
+Reading camera 218/324
+Reading camera 219/324
+Reading camera 220/324
+Reading camera 221/324
+Reading camera 222/324
+Reading camera 223/324
+Reading camera 224/324
+Reading camera 225/324
+Reading camera 226/324
+Reading camera 227/324
+Reading camera 228/324
+Reading camera 229/324
+Reading camera 230/324
+Reading camera 231/324
+Reading camera 232/324
+Reading camera 233/324
+Reading camera 234/324
+Reading camera 235/324
+Reading camera 236/324
+Reading camera 237/324
+Reading camera 238/324
+Reading camera 239/324
+Reading camera 240/324
+Reading camera 241/324
+Reading camera 242/324
+Reading camera 243/324
+Reading camera 244/324
+Reading camera 245/324
+Reading camera 246/324
+Reading camera 247/324
+Reading camera 248/324
+Reading camera 249/324
+Reading camera 250/324
+Reading camera 251/324
+Reading camera 252/324
+Reading camera 253/324
+Reading camera 254/324
+Reading camera 255/324
+Reading camera 256/324
+Reading camera 257/324
+Reading camera 258/324
+Reading camera 259/324
+Reading camera 260/324
+Reading camera 261/324
+Reading camera 262/324
+Reading camera 263/324
+Reading camera 264/324
+Reading camera 265/324
+Reading camera 266/324
+Reading camera 267/324
+Reading camera 268/324
+Reading camera 269/324
+Reading camera 270/324
+Reading camera 271/324
+Reading camera 272/324
+Reading camera 273/324
+Reading camera 274/324
+Reading camera 275/324
+Reading camera 276/324
+Reading camera 277/324
+Reading camera 278/324
+Reading camera 279/324
+Reading camera 280/324
+Reading camera 281/324
+Reading camera 282/324
+Reading camera 283/324
+Reading camera 284/324
+Reading camera 285/324
+Reading camera 286/324
+Reading camera 287/324
+Reading camera 288/324
+Reading camera 289/324
+Reading camera 290/324
+Reading camera 291/324
+Reading camera 292/324
+Reading camera 293/324
+Reading camera 294/324
+Reading camera 295/324
+Reading camera 296/324
+Reading camera 297/324
+Reading camera 298/324
+Reading camera 299/324
+Reading camera 300/324
+Reading camera 301/324
+Reading camera 302/324
+Reading camera 303/324
+Reading camera 304/324
+Reading camera 305/324
+Reading camera 306/324
+Reading camera 307/324
+Reading camera 308/324
+Reading camera 309/324
+Reading camera 310/324
+Reading camera 311/324
+Reading camera 312/324
+Reading camera 313/324
+Reading camera 314/324
+Reading camera 315/324
+Reading camera 316/324
+Reading camera 317/324
+Reading camera 318/324
+Reading camera 319/324
+Reading camera 320/324
+Reading camera 321/324
+Reading camera 322/324
+Reading camera 323/324
+Reading camera 324/324 [15/11 23:41:02]
+Loading Training Cameras [15/11 23:41:02]
+Loading Test Cameras [15/11 23:41:18]
+Number of points at initialisation :  51340 [15/11 23:41:20]
+=== Densification settings === [15/11 23:41:22]
+densify_grad_threshold: 0.0002 x 1.0 [15/11 23:41:22]
+densification_interval: 100 [15/11 23:41:22]
+densify_from_iter / until_iter: 500 / 15000 [15/11 23:41:22]
+opacity reset: every 3000 [15/11 23:41:22]
+exposure: off [15/11 23:41:22]
+============================== [15/11 23:41:22]
+[15/11 23:41:22]
+[ITER 1000] Densification: 105884 -> 128606 gaussians [15/11 23:41:53]
+[ITER 2000] Densification: 459455 -> 496624 gaussians [15/11 23:42:31]
+[ITER 3000] Densification: 840289 -> 877395 gaussians [15/11 23:43:28]
+[ITER 4000] Densification: 935576 -> 971547 gaussians [15/11 23:44:35]
+[ITER 5000] Densification: 1293249 -> 1327282 gaussians [15/11 23:45:56]
+[ITER 6000] Densification: 1602751 -> 1632936 gaussians [15/11 23:47:30]
+[ITER 7000] Evaluating test: L1 0.054680883793569196 PSNR 23.098116944475873 [15/11 23:49:13]
+[ITER 7000] Evaluating train: L1 0.029400337859988215 PSNR 26.650561141967774 [15/11 23:49:16]
+[ITER 7000] Densification: 1523440 -> 1554601 gaussians [15/11 23:49:16]
+[ITER 8000] Densification: 1809166 -> 1834928 gaussians [15/11 23:51:04]
+[ITER 9000] Densification: 2063771 -> 2087981 gaussians [15/11 23:53:02]
+[ITER 10000] Densification: 1825681 -> 1846676 gaussians [15/11 23:55:02]
+[ITER 11000] Densification: 2055176 -> 2076240 gaussians [15/11 23:57:04]
+[ITER 12000] Densification: 2262700 -> 2282664 gaussians [15/11 23:59:13]
+[ITER 13000] Densification: 1990224 -> 2008681 gaussians [16/11 00:01:25]
+[ITER 14000] Densification: 2179739 -> 2195732 gaussians [16/11 00:03:37]
+[ITER 30000] Evaluating test: L1 0.044245922688122205 PSNR 25.684915961288826 [16/11 00:37:57]
+[ITER 30000] Evaluating train: L1 0.013126860372722149 PSNR 32.75794372558594 [16/11 00:37:58]
+[ITER 30000] Saving Gaussians [16/11 00:37:58]
+Saved to: /content/output/plain/point_cloud/iteration_30000 [16/11 00:38:25]
+Training complete. [16/11 00:38:25]

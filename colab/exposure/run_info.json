@@ -1,0 +1,11 @@
+{
+ "name": "exposure",
+ "method": "trainv3",
+ "options": "",
+ "iterations": 30000,
+ "resolution": 2,
+ "train_minutes": 94.0,
+ "gaussians": 2362965,
+ "resumed_from_iteration": 0,
+ "gpu": "Tesla T4"
+}

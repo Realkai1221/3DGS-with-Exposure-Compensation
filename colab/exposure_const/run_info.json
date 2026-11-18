@@ -1,0 +1,11 @@
+{
+ "name": "exposure_const",
+ "method": "trainv3",
+ "options": "--exposure_init constant",
+ "iterations": 30000,
+ "resolution": 2,
+ "train_minutes": 93.5,
+ "gaussians": 2247737,
+ "resumed_from_iteration": 0,
+ "gpu": "Tesla T4"
+}
