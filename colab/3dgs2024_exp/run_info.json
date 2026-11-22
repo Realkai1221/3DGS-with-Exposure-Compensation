@@ -1,0 +1,11 @@
+{
+ "name": "3dgs2024_exp",
+ "method": "3dgs2024",
+ "options": "--train_test_exp --exposure_lr_init 0.001 --exposure_lr_final 0.0001 --exposure_lr_delay_steps 5000 --exposure_lr_delay_mult 0.001",
+ "iterations": 30000,
+ "resolution": 2,
+ "train_minutes": 68.0,
+ "gaussians": 2068939,
+ "resumed_from_iteration": 0,
+ "gpu": "Tesla T4"
+}

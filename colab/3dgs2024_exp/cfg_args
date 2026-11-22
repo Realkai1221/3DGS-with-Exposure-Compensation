@@ -1,0 +1,1 @@
+Namespace(sh_degree=3, source_path='/content/data/room', model_path='/content/output/3dgs2024_exp', images='images', depths='', resolution=2, white_background=False, train_test_exp=True, data_device='cuda', eval=True)

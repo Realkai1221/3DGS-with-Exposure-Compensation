@@ -1,0 +1,11 @@
+{
+ "name": "v1",
+ "method": "v1",
+ "options": "",
+ "iterations": 30000,
+ "resolution": 2,
+ "train_minutes": 68.9,
+ "gaussians": 2946150,
+ "resumed_from_iteration": 0,
+ "gpu": "Tesla T4"
+}

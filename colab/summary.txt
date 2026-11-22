@@ -1,0 +1,36 @@
+============================================================
+Model: plain   (ours_30000, 41 test images)
+method: trainv3   options: '--no_exposure'   resolution: 1/2   Gaussians: 2,347,189   training: 57.6 min on Tesla T4
+PSNR: 25.6568 +/- 6.0482   range [12.5348, 35.6083]   best 00010.png   worst 00024.png
+SSIM: 0.9020 +/- 0.0653   range [0.7587, 0.9870]   best 00009.png   worst 00039.png
+LPIPS: 0.1917 +/- 0.1095   range [0.0749, 0.5451]   best 00008.png   worst 00034.png
+============================================================
+Model: exposure_const   (ours_30000, 41 test images)
+method: trainv3   options: '--exposure_init constant'   resolution: 1/2   Gaussians: 2,247,737   training: 93.5 min on Tesla T4
+PSNR: 24.2481 +/- 6.5015   range [11.4363, 36.0508]   best 00010.png   worst 00024.png
+SSIM: 0.8884 +/- 0.0722   range [0.7388, 0.9914]   best 00009.png   worst 00024.png
+LPIPS: 0.2096 +/- 0.1174   range [0.0610, 0.5509]   best 00009.png   worst 00034.png
+============================================================
+Model: exposure   (ours_30000, 41 test images)
+method: trainv3   options: ''   resolution: 1/2   Gaussians: 2,362,965   training: 94.0 min on Tesla T4
+PSNR: 22.7790 +/- 5.5890   range [11.1943, 33.4378]   best 00023.png   worst 00024.png
+SSIM: 0.8777 +/- 0.0728   range [0.7078, 0.9857]   best 00009.png   worst 00032.png
+LPIPS: 0.2307 +/- 0.1141   range [0.0828, 0.5430]   best 00009.png   worst 00034.png
+============================================================
+Model: 3dgs2024   (ours_30000, 41 test images)
+method: 3dgs2024   options: ''   resolution: 1/2   Gaussians: 2,237,268   training: 70.4 min on Tesla T4
+PSNR: 27.2175 +/- 5.1471   range [17.2794, 37.4916]   best 00009.png   worst 00025.png
+SSIM: 0.9218 +/- 0.0499   range [0.7800, 0.9917]   best 00009.png   worst 00020.png
+LPIPS: 0.1584 +/- 0.0832   range [0.0603, 0.4226]   best 00009.png   worst 00034.png
+============================================================
+Model: v1   (ours_30000, 41 test images)
+method: v1   options: ''   resolution: 1/2   Gaussians: 2,946,150   training: 68.9 min on Tesla T4
+PSNR: 20.3469 +/- 7.9126   range [7.0914, 37.0358]   best 00009.png   worst 00039.png
+SSIM: 0.8192 +/- 0.1377   range [0.4210, 0.9911]   best 00009.png   worst 00013.png
+LPIPS: 0.2838 +/- 0.1504   range [0.0636, 0.6273]   best 00009.png   worst 00034.png
+============================================================
+Model: 3dgs2024_exp   (ours_30000, 41 test images)
+method: 3dgs2024   options: '--train_test_exp --exposure_lr_init 0.001 --exposure_lr_final 0.0001 --exposure_lr_delay_steps 5000 --exposure_lr_delay_mult 0.001'   resolution: 1/2   Gaussians: 2,068,939   training: 68.0 min on Tesla T4
+PSNR: 28.8148 +/- 5.0804   range [18.8530, 41.5925]   best 00009.png   worst 00026.png
+SSIM: 0.9295 +/- 0.0510   range [0.7682, 0.9952]   best 00009.png   worst 00016.png
+LPIPS: 0.1452 +/- 0.0795   range [0.0448, 0.3471]   best 00004.png   worst 00034.png

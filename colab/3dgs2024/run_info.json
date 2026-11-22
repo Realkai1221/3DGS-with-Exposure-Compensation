@@ -1,0 +1,11 @@
+{
+ "name": "3dgs2024",
+ "method": "3dgs2024",
+ "options": "",
+ "iterations": 30000,
+ "resolution": 2,
+ "train_minutes": 70.4,
+ "gaussians": 2237268,
+ "resumed_from_iteration": 0,
+ "gpu": "Tesla T4"
+}

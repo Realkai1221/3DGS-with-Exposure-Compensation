@@ -1,0 +1,17 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795098160.566755    4814 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 AVX512F FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1795098163.725095    4814 cudart_stub.cc:31] Could not find cuda drivers on your machine, GPU will not be used.
+Optimizing /content/output/3dgs2024
+Output folder: /content/output/3dgs2024 [19/11 14:22:45]
+------------LLFF HOLD------------- [19/11 14:22:46]
+Loading Training Cameras [19/11 14:22:46]
+Loading Test Cameras [19/11 14:23:02]
+Number of points at initialisation :  51340 [19/11 14:23:04]
+[ITER 7000] Evaluating test: L1 0.044079717294108575 PSNR 24.628156708508005 [19/11 14:32:57]
+[ITER 7000] Evaluating train: L1 0.03154773265123367 PSNR 26.74420928955078 [19/11 14:33:00]
+[ITER 30000] Evaluating test: L1 0.03313513454504129 PSNR 27.252270349642128 [19/11 15:32:38]
+[ITER 30000] Evaluating train: L1 0.013281155563890935 PSNR 33.15704879760742 [19/11 15:32:40]
+[ITER 30000] Saving Gaussians [19/11 15:32:40]
+Training complete. [19/11 15:33:02]
