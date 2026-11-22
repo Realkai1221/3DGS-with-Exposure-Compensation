@@ -64,7 +64,7 @@
 
 \section{Abstract}
 
-Indoor scene reconstruction from casual imagery is hard to achieve because most of the images that are used as dataset are composed of shiny textures such as windows, wardrobes and plants, which results in complex lighting for the model to reconstruct. This problem is significant for real-world 3D reconstruction used in AR (Augmented Reality) applications, creation of metaverse, digital twin and gaming scene design, where photorealistic qualities of indoor scenes are required. In this paper, I study neural rendering methods (NeRF, Luminance-GS, 3DGS, etc.) and identify three improvement directions specifically for the 3DGS pipeline: (1) enhancing planar regions' depth accuracy with additional geometric constraints, (2) compensating for exposure differences across images, and (3) densifying the initial point cloud with multi-view data. This project then adapts the 3DGS technique to indoor environments by implementing exposure compensation into the reconstruction pipeline. By addressing exposure variation between input images, I try to reduce the floating artifacts (semi-transparent elliptical Gaussians) that often arise from lighting inconsistencies. The implementation gives every Gaussian a learnable exposure factor and renders these factors into an exposure map that normalizes brightness across training images, thereby making the optimisation less affected to lighting issues. \pending{Summary of the quantitative and qualitative results.} Therefore, I draw conclusions and identify the areas that can be improved.
+Indoor scene reconstruction from casual imagery is hard to achieve because most of the images that are used as dataset are composed of shiny textures such as windows, wardrobes and plants, which results in complex lighting for the model to reconstruct. This problem is significant for real-world 3D reconstruction used in AR (Augmented Reality) applications, creation of metaverse, digital twin and gaming scene design, where photorealistic qualities of indoor scenes are required. In this paper, I study neural rendering methods (NeRF, Luminance-GS, 3DGS, etc.) and identify three improvement directions specifically for the 3DGS pipeline: (1) enhancing planar regions' depth accuracy with additional geometric constraints, (2) compensating for exposure differences across images, and (3) densifying the initial point cloud with multi-view data. This project then adapts the 3DGS technique to indoor environments by implementing exposure compensation into the reconstruction pipeline. By addressing exposure variation between input images, I try to reduce the floating artifacts (semi-transparent elliptical Gaussians) that often arise from lighting inconsistencies. The implementation gives every Gaussian a learnable exposure factor and renders these factors into an exposure map that normalizes brightness across training images, thereby making the optimisation less affected to lighting issues. I tested it on a dataset of my own room filmed with a phone, against the original 3DGS code from 2023, the 2024 version of 3DGS and my first implementation (v1). On this scene the exposure compensation did not reduce the floating artifacts overall: the full version (v2) reached 22.78\,dB PSNR, 2.88\,dB below the original 3DGS (25.66\,dB), and it was also worse in SSIM and LPIPS. In the test views where 3DGS has the most floaters it performed about the same as 3DGS, removing some floaters but creating others, while new floaters appeared close to the camera in views that 3DGS rendered well. The 2024 version of 3DGS scored highest (27.22\,dB), and its own per-image exposure compensation improved it further, but only when part of each test image was used to fit it. Therefore, I draw conclusions and identify the areas that can be improved.
 
 \clearpage
 \section{Introduction}
@@ -89,6 +89,7 @@ Modern digital scene reconstruction pipelines combine image capture, computer vi
 In the pipeline described above, 3DGS proposed a new way of reconstructing 3D models without using neural network (MLP) in NeRF. The major difference is 3D Gaussian Splatting models the scene as a large collection of elliptical 3D Gaussian blobs in 3D space. Each Gaussian is defined by parameters specifying its center location, its spatial covariance (which can be thought of as the extent and orientation of the blob) and its appearance (color and opacity) \cite{ref7}. Because these Gaussians are explicit primitives (much like tiny 3D ``splats'' or particles), the scene can be rendered by rasterizing them -- projecting each Gaussian onto the image plane and blending their contributions \cite{ref8}, rather than tracing rays through a neural field. Details of the mathematical basis of 3DGS are given in Appendix A. This offers a significant speed advantage: the original 3DGS work achieved real-time ($>$30 FPS) 1080p rendering, something standard NeRF cannot do due to its neural network learning process. Another advantage of 3DGS is quality: by optimizing millions of parameters (that forms the Gaussians) directly with image-based losses, it can produce sharp, photorealistic results comparable to or better than NeRF\cite{ref4}. Within a reconstruction pipeline, 3DGS thus enables faster scene digitization: one can capture a space, run the 3DGS optimization, and almost immediately have a model ready to visualize or integrate into applications. This makes it highly appealing for time-sensitive applications where both speed and fidelity are required. Finally, because 3DGS contains an interpretable collection of primitives, it is easy to further edit or refine the model with 3D editors (e.g. deleting a few Gaussians to clean up artifacts), which is harder to do with opaque neural network weights.
 
 \section{Limitations of Original 3DGS and Researching Directions}
+\label{sec:limits}
 
 \begin{figure}[H]
 \centering
@@ -228,7 +229,7 @@ This provides a unified interface that combines all exposure losses with configu
 
 The 3DGS repository has a train.py file used to kick off training \cite{ref30}. The initial integration in trainv1.py (see Appendix B) introduces basic exposure compensation, where I added exposure support while postponing advanced features for clarity. At this stage the exposure factors are held in a small stand-alone \textit{ExposureModel} (also listed in Appendix B) rather than in the Gaussians themselves. After the Gaussian point cloud is loaded from SfM, ExposureModel(num\_gaussians) is instantiated (lines 33--36), and its parameters are given to an Adam optimiser. After rendering, the system creates an exposure map (initially simplified as a uniform map based on the mean exposure), applies the adjustment to the rendered image (lines 102--114), and includes the exposure loss in the total optimisation objective. There is also a simple exposure inherence implemented after densification, where the exposure tensor is resized by hand (lines 161--175). However, there is no actual neighbour computation (spatial smoothness disabled) in trainv1.py, as I only implemented an empty list for neighbour. Additionally, there is no multi-view consistency tracking, since I set the smooth and consistency losses to 0.
 
-Nonetheless, I still ran this basic adaptation and noticed a noticeable improvement both quantitatively and qualitatively (see Table~\ref{tab:1}).
+Nonetheless, I still ran this basic adaptation to see how it performs before adding the remaining parts. It scored the lowest of all methods (Table~\ref{tab:1}), which is discussed in Section~\ref{sec:results}.
 
 \subsection{Fully implementation in trainv2.py}
 
@@ -241,18 +242,20 @@ For the exposure map, I changed from a uniform exposure map to the rendered spat
 To keep the optimisation stable, only the RGB exposure loss is active during the first 1000 iterations, and the weight of the exposure losses increases linearly over the first 5000 iterations. The learning rate of the exposure factors starts at one tenth of its final value (0.001) for the first 3000 iterations and is then reduced by 2\% every 2000 iterations, and the gradient of the exposure factors is clipped. As mentioned earlier, due to slow training speed (Figure~\ref{fig:4}), the smoothness loss is computed on at most 50\,000 randomly chosen visible Gaussians per iteration, instead of inspecting every Gaussian each iteration; this makes it more memory-efficient. The densification of 3DGS is otherwise left unchanged, including its periodic opacity reset. I also added a variable that multiplies the gradient threshold of densification to control how many Gaussians can be added during each densification, together with switches that turn each exposure component off, so that the contribution of each part can be measured separately.
 
 \subsection{Outcome and Achievement}
+\label{sec:outcome}
 
-The most immediate benefit of modeling exposure as a per-Gaussian property is that illumination and surface appearance are stored separately. Without it, a Gaussian has to average between the different exposure levels of the same surface, resulting in muddy, inconsistent colors, or the optimisation introduces semi-transparent Gaussians to account for the brightness changes. By allowing each Gaussian to carry its own exposure factor, the system is able to disentangle illumination variations from true surface appearance: for objects that span both bright and shadowed regions, lighting differences can be absorbed by the exposure factors within the exposure map rather than being averaged into the surface color.
+The main idea of modeling exposure as a per-Gaussian property is that illumination and surface appearance can be stored separately. Without it, a Gaussian has to average between the different exposure levels of the same surface, resulting in muddy, inconsistent colors, or the optimisation introduces semi-transparent Gaussians to account for the brightness changes. By allowing each Gaussian to carry its own exposure factor, the system should be able to disentangle illumination variations from true surface appearance: for objects that span both bright and shadowed regions, lighting differences can be absorbed by the exposure factors within the exposure map rather than being averaged into the surface color. Section~\ref{sec:results} tests whether this separation happens in practice.
 
 Building on this, the consistency loss deals with multi-view behaviour. Without it, the exposure factor of a single Gaussian seen under varying exposures across different training views is pulled toward a different value by each view's lighting. The consistency loss counteracts that by pushing every Gaussian toward a single, view-independent exposure, so that each Gaussian keeps a stable value regardless of which training view updated it last.
 
-At the same time, spatial smoothness regularization encourages plausible exposure fields that respect the underlying geometry. Rather than each Gaussian choosing an unrelated exposure value, the smoothness loss encourages neighboring Gaussians to share similar exposure factors, which results in contiguous regions that correspond to real-world lighting phenomena. Because the exposure map is rendered directly from these factors, it can be saved and inspected for every view, which makes the reconstructed exposure more interpretable.
+At the same time, spatial smoothness regularization encourages plausible exposure fields that respect the underlying geometry. Rather than each Gaussian choosing an unrelated exposure value, the smoothness loss encourages neighboring Gaussians to share similar exposure factors, which should result in contiguous regions that correspond to real-world lighting phenomena. Because the exposure map is rendered directly from these factors, it can be saved and inspected for every view, which makes the reconstructed exposure more interpretable.
 
 Training stability also benefits from the bounded factors. Every exposure factor is clamped between 0.05 and 1.5 and the range loss keeps the values inside [0.1, 1.0], so the exposure map can neither approach zero nor grow without limit. Because the map multiplies the rendered image instead of dividing the ground truth, no division by small values takes place during backpropagation, which is where exploding gradients would otherwise come from. Together with the gradient clipping and the warm-up of the exposure losses, this keeps the updates of the exposure factors bounded throughout training.
 
 Memory efficiency is also considered in the multi-view tracker. Instead of storing full exposure histories for every Gaussian (which quickly becomes infeasible for large scenes or long training runs), the system retains only the ten most recent observations in a single tensor. In the same way, the smoothness loss only looks at a sample of the currently visible Gaussians, reducing both memory usage and computational overhead.
 
 \subsection{Potential Improvement}
+\label{sec:improve}
 
 However, the current implementation in trainv2.py, while functional, still has limitations. The exposure map is obtained with a second rendering pass, which adds a second rasterisation to every iteration. A better improvement would involve modifying the CUDA rendering kernel to accumulate exposure values during the alpha compositing process of the colour pass itself. Currently, the renderer accumulates only color and opacity, but by extending it to track exposure contributions from each Gaussian at the same time, we could generate the same pixel-accurate exposure maps in a single pass. Beyond kernel modifications, the per-Gaussian scalar exposure model itself has limitations. Real-world illumination exhibits diverse structure: regional lighting variations, and local surface interactions, but a single value per Gaussian is the same in every image, so it cannot represent the camera changing its exposure from one image to the next. The initialisation also does not test whether a Gaussian is hidden behind another surface in an image, so its starting grey value can include views in which it is occluded.
 
@@ -261,25 +264,44 @@ The smoothness loss treats all neighbours equally. At an extreme exposure transi
 The current densification strategy also operates blindly to exposure variations, under-sampling regions with complex lighting transitions. An exposure-aware densification mechanism would monitor both geometric and photometric gradients, automatically increasing Gaussian density at shadow boundaries, specular highlights, and other areas where lighting changes rapidly. This adaptive sampling can therefore naturally allocate computational resources where they contribute most to visual quality.
 
 \section{Results and Evaluation}
+\label{sec:results}
+
+The Room dataset is the video of my room described in Section~\ref{sec:limits}. COLMAP registered 324 of its 448 frames. As in the evaluation of 3DGS, every eighth frame is held out as a test image, which gives 41 test images, and the other 283 frames are used for training. Every method is trained for 30,000 iterations at half resolution on a Tesla T4 GPU (Google Colab), and every method is scored by the same evaluation script, the one of the 3DGS code. The 3DGS 2023 results come from trainv2.py with the exposure compensation switched off (option \texttt{-{}-no\_exposure}), which leaves the training of the original 3DGS code, so 3DGS 2023 and v2 differ only in the exposure compensation. 3DGS 2024 is run with its default options. I also trained v2 a second time with every exposure factor starting at 0.95 instead of its projected grey value (``v2, start 0.95''), to see how much the initialisation matters. Each configuration was trained once, so small differences between them can also come from the randomness of training.
+
+For trainv2.py, the test images are rendered with the exposure map applied (render\_exposure.py in Appendix B), i.e. the exposure-free image multiplied by its exposure map, since this is the image that is compared with the ground truth during training.
 
 \begin{table}[H]
 \centering
-\caption{Quantitative evaluation of our method compared to original 3DGS code and their updated code in 2024 (introduce simple exposure compensation), computed over one dataset that has been created by me. SSIM (Structural Similarity Index Measure): Ranges from 0 to 1, where 1 indicates perfect structural similarity between images. PSNR (Peak Signal-to-Noise Ratio): Measured in decibels (dB), where higher values indicate better image quality.$\uparrow$ indicates that higher values are better for both metrics. All methods were evaluated at 30,000 iterations on the Room dataset with 56 test images. (More detailed result see appendix C)}
+\caption{Quantitative evaluation of my method (v1 and v2) compared with the original 3DGS code from 2023 and its updated version from 2024, computed over one dataset that has been created by me. 3DGS 2024 is run with its default options, with which its exposure compensation is not used (Table~\ref{tab:2} compares it with the exposure compensation switched on). SSIM (Structural Similarity Index Measure): ranges from 0 to 1, where 1 indicates perfect structural similarity between images. PSNR (Peak Signal-to-Noise Ratio): measured in decibels (dB), where higher values indicate better image quality. LPIPS (Learned Perceptual Image Patch Similarity): a learned measure of how different two images look, where lower values are better. $\uparrow$ and $\downarrow$ indicate whether higher or lower values are better. Values are the mean $\pm$ standard deviation over the test images, and the ranges are the lowest and highest values. All methods were trained for 30,000 iterations and evaluated on the 41 test images of the Room dataset at half resolution. (More detailed results see Appendix C)}
 \label{tab:1}
 \vspace{0.5ex}
-\begin{tabular}{@{}lcccc@{}}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
 \toprule
-Dataset & \multicolumn{4}{c}{Room} \\
-\cmidrule(l){2-5}
-Method\textbackslash Metric & \textit{SSIM}$\uparrow$ & \textit{SSIM Range} & \textit{PSNR}$\uparrow$ & \textit{PSNR Range} \\
+Dataset & \multicolumn{5}{c}{Room} \\
+\cmidrule(l){2-6}
+Method\textbackslash Metric & \textit{SSIM}$\uparrow$ & \textit{SSIM Range} & \textit{PSNR}$\uparrow$ & \textit{PSNR Range} & \textit{LPIPS}$\downarrow$ \\
 \midrule
-v1-30K & $0.9669 \pm 0.0168$ & $[0.9061, 0.9881]$ & $30.99 \pm 3.89$ & $[19.32, 36.66]$ \\
-v2-30K & \pending{pending} & \pending{pending} & \pending{pending} & \pending{pending} \\
-3DGS2023-30K & $0.9605 \pm 0.0208$ & $[0.9113, 0.9967]$ & $36.89 \pm 4.75$ & $[21.26, 44.50]$ \\
-3DGS2024-30K & $0.9787 \pm 0.0173$ & $[0.9302, 0.9983]$ & $37.71 \pm 3.37$ & $[30.65, 45.07]$ \\
+v1-30K & $0.8192 \pm 0.1377$ & $[0.4210, 0.9911]$ & $20.35 \pm 7.91$ & $[7.09, 37.04]$ & $0.2838 \pm 0.1504$ \\
+v2-30K & $0.8777 \pm 0.0728$ & $[0.7078, 0.9857]$ & $22.78 \pm 5.59$ & $[11.19, 33.44]$ & $0.2307 \pm 0.1141$ \\
+v2-30K, start 0.95 & $0.8884 \pm 0.0722$ & $[0.7388, 0.9914]$ & $24.25 \pm 6.50$ & $[11.44, 36.05]$ & $0.2096 \pm 0.1174$ \\
+3DGS2023-30K & $0.9020 \pm 0.0653$ & $[0.7587, 0.9870]$ & $25.66 \pm 6.05$ & $[12.53, 35.61]$ & $0.1917 \pm 0.1095$ \\
+3DGS2024-30K & \best{0.9218 \pm 0.0499} & $[0.7800, 0.9917]$ & \best{27.22 \pm 5.15} & $[17.28, 37.49]$ & \best{0.1584 \pm 0.0832} \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
+
+\subsection{Quantitative results}
+
+Table~\ref{tab:1} shows that my exposure compensation did not improve on the original 3DGS. v2 reached 22.78\,dB PSNR, 2.88\,dB below 3DGS 2023 (25.66\,dB), and it is also worse in SSIM (0.8777 against 0.9020) and LPIPS (0.2307 against 0.1917). Starting every exposure factor at 0.95 did better (24.25\,dB), but it is still 1.41\,dB below 3DGS 2023. v1 scored the lowest of all methods (20.35\,dB) and 3DGS 2024 the highest (27.22\,dB). v2 also fits the training images slightly less well than 3DGS 2023 (31.31\,dB against 32.76\,dB on five training images) and is already behind after 7,000 iterations (Table~\ref{tab:3} in Appendix C), so its lower scores do not come from overfitting the training images.
+
+\subsection{Effect on the floating artifacts}
+
+To answer the question of this paper, I compared the test images one by one (Table~\ref{tab:4} in Appendix C). 3DGS 2023 has heavy floaters in eight of the 41 test images, the ones below 20\,dB. In these eight images v2 is about as good as 3DGS 2023 on average ($-0.18$\,dB, and $-0.02$\,dB with the start at 0.95): it removes floaters in some of them, for example image 00011 ($+3.07$\,dB) and image 00025 ($+2.22$\,dB, Figure~\ref{fig:6}), but makes others worse. The loss comes from the other 33 images, which 3DGS 2023 renders well. In these, v2 is 3.53\,dB lower on average (1.74\,dB with the start at 0.95), because large blurry floaters appear close to the camera, such as the dark band along the top of the window view in Figure~\ref{fig:6}. Overall, v2 is better than 3DGS 2023 in only 5 of the 41 test images, and in 14 with the start at 0.95.
+
+render\_exposure.py also saves every test image before its exposure map is applied. If the exposure factors held only the brightness, these images should show the scene under an even exposure. Instead they score only 11.23\,dB (20.66\,dB with the start at 0.95). With the grey-value initialisation the exposure map stays around 0.63 on average, and the colours of the Gaussians became about 1.4 times brighter than the photos to make up for it. So in practice the exposure factors and the colours are not separated as I intended in Section~\ref{sec:outcome}: the colours take on part of the exposure, and the exposure factors act as an extra colour parameter rather than as a correction of the lighting. I also checked whether the images that got worse are the ones where the exposure map varies the most, which would point to the mixing of neighbouring exposure values in the map; they are not (correlation $-0.09$).
+
+v1 is worse than v2: its images are on average 6\% too dark, and some views are almost completely blurred, for example image 00013 at 7.19\,dB against 28.09\,dB for 3DGS 2023. Its images before the exposure adjustment score even lower (18.08\,dB), so the problem lies in the Gaussians themselves and not only in the adjustment. The parts I added in trainv2.py (the exposure inheritance through densification, the rendered exposure map and the four losses) raised the result by 2.43\,dB (3.90\,dB with the start at 0.95), but not above 3DGS 2023.
 
 \begin{figure}[H]
 \centering
@@ -287,25 +309,55 @@ v2-30K & \pending{pending} & \pending{pending} & \pending{pending} & \pending{pe
 \includegraphics[width=0.235\textwidth]{figures/fig6_window_groundtruth.png} &
 \includegraphics[width=0.235\textwidth]{figures/fig6_window_3dgs2023.png} &
 \includegraphics[width=0.235\textwidth]{figures/fig6_window_3dgs2024.png} &
-\pendingbox \\
+\includegraphics[width=0.235\textwidth]{figures/fig6_window_ours_v2.png} \\
 Ground Truth & 3DGS 2023 & 3DGS 2024 & Ours (v2) \\[1ex]
-\includegraphics[width=0.235\textwidth]{figures/fig6_wardrobe_groundtruth.jpg} &
-\includegraphics[width=0.235\textwidth]{figures/fig6_wardrobe_3dgs2023.png} &
-\includegraphics[width=0.235\textwidth]{figures/fig6_wardrobe_3dgs2024.png} &
-\pendingbox \\
+\includegraphics[width=0.235\textwidth]{figures/fig6_mirror_groundtruth.png} &
+\includegraphics[width=0.235\textwidth]{figures/fig6_mirror_3dgs2023.png} &
+\includegraphics[width=0.235\textwidth]{figures/fig6_mirror_3dgs2024.png} &
+\includegraphics[width=0.235\textwidth]{figures/fig6_mirror_ours_v2.png} \\
 Ground Truth & 3DGS 2023 & 3DGS 2024 & Ours (v2)
 \end{tabular}
-\caption{Qualitative Comparisons of ground truth, 3DGS 2023, 3DGS 2024 and ours (v2) of two different scenes, Window/Wardrobe, under the same dataset Room}
+\caption{Qualitative comparisons of ground truth, 3DGS 2023, 3DGS 2024 and ours (v2) on two test views of the Room dataset, Window (test image 00012; PSNR 29.18, 27.26 and 21.34\,dB) and Mirror (test image 00025; PSNR 15.72, 17.28 and 17.94\,dB). In the window view v2 adds a dark floater along the top of the image; in the mirror view it removes part of the floater haze of 3DGS 2023.}
 \label{fig:6}
 \end{figure}
 
-All methods are trained for 30,000 iterations on the same dataset. For trainv2.py, the test images are rendered with the exposure map applied (render\_exposure.py in Appendix B), i.e. the exposure-free image multiplied by its exposure map, since this is the image that is compared with the ground truth during training.
+\subsection{Comparison with 3DGS 2024}
 
-\pending{Discussion of the quantitative and qualitative results of trainv2.py.}
+With its default options, 3DGS 2024 scored 1.56\,dB above 3DGS 2023, although neither of them uses exposure compensation and both are trained on the same images with the same settings. Most of this difference is in the eight floater images ($+4.67$\,dB on average, for example $+7.41$\,dB on image 00024, $+7.86$\,dB on 00039 and $+7.81$\,dB on 00032), and much less in the other 33 ($+0.81$\,dB). Because each method was trained once, I cannot tell whether this comes from changes in the 2024 code or from the randomness of where floaters form.
+
+3DGS 2024 has its own exposure compensation, which learns a colour transform (a $3\times4$ matrix) for every image. It is only used with the option \texttt{-{}-train\_test\_exp}, which also trains on the left half of every test image, so that a transform can be learned for it, and scores only the right half. I therefore scored every method again on the right halves of the same test images (Table~\ref{tab:2}). There, 3DGS 2024 with exposure compensation reached 28.81\,dB, 1.50\,dB above 3DGS 2024 without it and the best of all methods. The learned transforms show that the images really differ in exposure: the brightness they apply to a mid-grey pixel ranges from 0.59 to 1.22 times (0.98 $\pm$ 0.13), probably because the phone adjusted its exposure while I was filming. However, the gain depends on the transform learned from the left half of each test image. When I take these transforms out again, the same renders score 23.23\,dB, 4.08\,dB below 3DGS 2024 without exposure compensation. In the eight floater images a small gain remains even without the transforms ($+0.79$\,dB), which may come from the extra training data (the left halves) rather than from the exposure compensation itself; a run that trains on the left halves without exposure compensation would separate the two.
+
+\begin{table}[H]
+\centering
+\caption{Comparison with the exposure compensation of 3DGS 2024, on the right halves of the 41 test images. With its exposure compensation switched on (option \texttt{-{}-train\_test\_exp}), 3DGS 2024 also trains on the left half of every test image, so that it can learn a colour transform for it, and is scored on the right halves only. The other methods are therefore scored again on the right halves, from their saved test renders. The last row is the same model as the row above with the learned colour transforms taken out again. LPIPS was not recomputed for the right halves; for 3DGS 2024 with exposure compensation it is $0.1452 \pm 0.0795$.}
+\label{tab:2}
+\vspace{0.5ex}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Method (right halves of the test images) & \textit{SSIM}$\uparrow$ & \textit{PSNR}$\uparrow$ \\
+\midrule
+v1-30K & $0.8090 \pm 0.1488$ & $20.55 \pm 8.42$ \\
+v2-30K & $0.8721 \pm 0.0788$ & $22.80 \pm 5.83$ \\
+v2-30K, start 0.95 & $0.8838 \pm 0.0752$ & $24.12 \pm 6.68$ \\
+3DGS2023-30K & $0.8974 \pm 0.0706$ & $25.45 \pm 6.24$ \\
+3DGS2024-30K & $0.9201 \pm 0.0528$ & $27.31 \pm 5.64$ \\
+3DGS2024-30K with exposure compensation & \best{0.9295 \pm 0.0510} & \best{28.81 \pm 5.08} \\
+\quad the same, colour transforms taken out & $0.9162 \pm 0.0593$ & $23.23 \pm 5.16$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Qualitative results}
+
+Figure~\ref{fig:6} shows two of the test views. In the window view, 3DGS 2023 and 3DGS 2024 render the scene cleanly (29.18\,dB and 27.26\,dB), while v2 has a dark floater along the top of the image, close to the camera (21.34\,dB). In the mirror view, most of the 3DGS 2023 image is covered by a floater haze (15.72\,dB); v2 removes part of it (17.94\,dB), about as much as 3DGS 2024 does (17.28\,dB).
+
+\subsection{How effective is exposure compensation?}
+
+On my dataset, the per-Gaussian exposure compensation did not reduce the floating artifacts: it removed some floaters, created others, and lowered the overall quality. The exposure differences between the images are real, as the transforms learned by 3DGS 2024 show, but they belong to each image rather than to each Gaussian. A single exposure value per Gaussian is the same in every image, so it cannot represent the camera changing its exposure from one image to the next (Section~\ref{sec:improve}), and during training it ended up acting as extra colour. A per-image model such as that of 3DGS 2024 does fit these changes, but its benefit only appears when part of each test image is available to fit it, which is not possible for a truly new view. Exposure compensation alone is therefore not a reliable way to remove floaters on this scene, and the other two directions from Section~\ref{sec:limits}, geometric constraints and a denser initial point cloud, are worth testing next.
 
 \section{Conclusion}
 
-This paper looked at the limitations of 3D Gaussian Splatting (3DGS) for indoor scene reconstruction and proposed an exposure compensation approach to address one of its key challenges. Through my analysis and novel implementation for exposure compensation, I have integrated exposure normalization into the 3DGS pipeline: every Gaussian carries a learnable exposure factor that is initialised from the training images, inherited through densification, rendered into a pixel-accurate exposure map and regularised by smoothness, range and multi-view consistency losses. \pending{Summary of the findings of Section 5.} In the end, I have also addressed the possible ways of improvement for the exposure compensation method.
+This paper looked at the limitations of 3D Gaussian Splatting (3DGS) for indoor scene reconstruction and proposed an exposure compensation approach to address one of its key challenges. Through my analysis and novel implementation for exposure compensation, I have integrated exposure normalization into the 3DGS pipeline: every Gaussian carries a learnable exposure factor that is initialised from the training images, inherited through densification, rendered into a pixel-accurate exposure map and regularised by smoothness, range and multi-view consistency losses. On my Room dataset, however, it did not reduce the floating artifacts. The full version (v2) reached 22.78\,dB PSNR against 25.66\,dB for the original 3DGS; it removed floaters in some views but created new ones close to the camera in others, and the images rendered before the exposure map show that the exposure factors and the colours of the Gaussians did not separate as intended. Starting every exposure factor at 0.95 instead of its grey value narrowed the gap to 1.41\,dB but did not close it. The exposure differences between the images are real, as the colour transforms learned by 3DGS 2024 show, but they are a property of each image rather than of each Gaussian, and even the per-image model of 3DGS 2024 only helped when part of each test image could be used to fit it. In the end, I have also addressed the possible ways of improvement for the exposure compensation method.
 
 \clearpage
 \phantomsection
@@ -486,22 +538,85 @@ The training script:
 \lstinputlisting{code/render_exposure.py}
 
 \clearpage
-\section{SSIM and PSNR Log}
+\section{Detailed Results}
+\label{app:c}
 
-\noindent (a) Results for 3DGS 2023
+Every run was trained for 30,000 iterations at half resolution on one Tesla T4 GPU (Google Colab) and evaluated on the 41 test images of the Room dataset. Table~\ref{tab:3} gives the details of each run and Table~\ref{tab:4} the PSNR of every test image.
 
-\noindent\includegraphics[width=1.0\textwidth]{figures/log_a_3dgs2023.png}
+\begin{table}[H]
+\centering
+\caption{Details of each run. The last three columns are the PSNR values (dB) printed during training: on the test images after 7,000 and 30,000 iterations, and on five of the training images after 30,000 iterations. For v1 these leave out its exposure adjustment, which its final result in Table~\ref{tab:1} includes; for 3DGS 2024 with exposure compensation the test values are for the right halves of the test images.}
+\label{tab:3}
+\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Method & Gaussians & Training & Test, 7K & Test, 30K & Train, 30K \\
+\midrule
+v1-30K & 2,946,150 & 69 min & 18.07 & 18.10 & 20.87 \\
+v2-30K & 2,362,965 & 94 min & 20.56 & 22.80 & 31.31 \\
+v2-30K, start 0.95 & 2,247,737 & 94 min & 22.26 & 24.27 & 31.87 \\
+3DGS2023-30K & 2,347,189 & 58 min & 23.10 & 25.68 & 32.76 \\
+3DGS2024-30K & 2,237,268 & 70 min & 24.63 & 27.25 & 33.16 \\
+3DGS2024-30K with exposure compensation & 2,068,939 & 68 min & 24.45 & 28.84 & 33.16 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\noindent (b) Results for 3DGS 2024
-
-\noindent\includegraphics[width=0.8\textwidth]{figures/log_b_3dgs2024.png}
-
-\noindent (c) Results for ours (v1)
-
-\noindent\includegraphics[width=0.95\textwidth]{figures/log_c_ours_v1.png}
-
-\noindent (d) Results for ours (v2)
-
-\noindent\pending{Evaluation log of trainv2.py.}
+\begin{table}[H]
+\centering
+\caption{PSNR (dB) of every test image. The eight images marked with * are the ones in which 3DGS 2023 has the most floaters (below 20\,dB). The last two columns are for the right halves of the images only (Table~\ref{tab:2}).}
+\label{tab:4}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+ & \multicolumn{5}{c}{Whole image} & \multicolumn{2}{c}{Right half} \\
+\cmidrule(lr){2-6}\cmidrule(l){7-8}
+Image & 3DGS 2023 & 3DGS 2024 & v1 & v2 & v2, start 0.95 & 3DGS 2024 & with exp.\ comp. \\
+\midrule
+00000 & 29.26 & 29.76 & 10.27 & 28.21 & 28.73 & 30.78 & 30.37 \\
+00001 & 30.88 & 31.95 & 12.26 & 29.84 & 30.74 & 31.14 & 30.26 \\
+00002 & 33.61 & 33.84 & 30.81 & 32.47 & 33.11 & 34.20 & 33.91 \\
+00003 & 30.57 & 26.06 & 29.08 & 26.98 & 31.44 & 24.85 & 33.80 \\
+00004 & 21.76 & 17.79 & 18.07 & 14.30 & 28.79 & 20.99 & 31.79 \\
+00005 & 24.00 & 26.31 & 13.91 & 19.44 & 18.74 & 26.88 & 33.89 \\
+00006 & 30.05 & 25.62 & 23.80 & 26.09 & 31.21 & 27.41 & 26.98 \\
+00007 & 27.00 & 27.32 & 26.63 & 22.91 & 27.99 & 25.75 & 26.35 \\
+00008 & 34.39 & 31.92 & 36.77 & 30.15 & 31.16 & 31.04 & 36.64 \\
+00009 & 23.26 & 37.49 & 37.04 & 24.88 & 36.04 & 41.09 & 41.59 \\
+00010 & 35.61 & 35.52 & 32.59 & 29.19 & 36.05 & 35.20 & 36.53 \\
+00011* & 14.44 & 20.82 & 22.59 & 17.51 & 16.69 & 18.66 & 23.96 \\
+00012 & 29.18 & 27.26 & 11.42 & 21.34 & 16.96 & 31.80 & 32.60 \\
+00013 & 28.09 & 29.32 & 7.19 & 23.91 & 20.13 & 28.56 & 28.52 \\
+00014 & 26.98 & 29.45 & 27.46 & 24.28 & 27.98 & 30.31 & 29.68 \\
+00015 & 28.57 & 28.44 & 27.24 & 26.75 & 28.88 & 27.37 & 27.79 \\
+00016 & 22.86 & 22.85 & 15.50 & 18.57 & 22.05 & 23.66 & 23.69 \\
+00017 & 25.21 & 25.67 & 26.38 & 25.07 & 24.07 & 24.52 & 26.33 \\
+00018 & 33.29 & 32.35 & 30.86 & 26.38 & 32.11 & 33.57 & 32.77 \\
+00019* & 16.26 & 17.98 & 15.31 & 15.85 & 15.07 & 15.82 & 22.00 \\
+00020 & 21.22 & 21.82 & 20.29 & 21.15 & 21.01 & 23.27 & 22.27 \\
+00021 & 24.54 & 24.45 & 17.47 & 21.51 & 23.05 & 23.11 & 23.38 \\
+00022 & 32.71 & 33.98 & 30.13 & 31.89 & 33.49 & 32.10 & 31.46 \\
+00023 & 35.43 & 36.71 & 25.10 & 33.44 & 29.01 & 36.33 & 30.09 \\
+00024* & 12.53 & 19.95 & 12.93 & 11.19 & 11.44 & 20.44 & 21.01 \\
+00025* & 15.72 & 17.28 & 16.36 & 17.94 & 17.45 & 18.93 & 30.29 \\
+00026* & 19.00 & 20.00 & 16.75 & 17.75 & 17.26 & 17.70 & 18.85 \\
+00027 & 31.44 & 30.09 & 29.71 & 28.49 & 30.21 & 34.09 & 35.54 \\
+00028 & 30.86 & 33.71 & 21.31 & 30.20 & 29.16 & 35.52 & 35.70 \\
+00029 & 28.99 & 28.93 & 21.69 & 24.14 & 25.89 & 27.39 & 29.47 \\
+00030 & 25.15 & 29.13 & 21.32 & 19.51 & 22.01 & 26.97 & 24.69 \\
+00031 & 25.13 & 29.09 & 15.86 & 19.35 & 19.85 & 28.34 & 28.91 \\
+00032* & 17.09 & 24.89 & 10.61 & 13.16 & 15.31 & 23.74 & 26.81 \\
+00033 & 27.42 & 30.59 & 19.67 & 20.80 & 23.05 & 31.72 & 31.29 \\
+00034* & 17.24 & 20.87 & 9.52 & 18.52 & 17.34 & 19.82 & 25.49 \\
+00035 & 29.59 & 28.16 & 10.04 & 25.43 & 20.63 & 26.80 & 30.52 \\
+00036 & 26.20 & 28.68 & 16.76 & 22.76 & 25.91 & 26.65 & 28.81 \\
+00037 & 24.76 & 22.63 & 16.45 & 18.72 & 15.43 & 22.34 & 19.06 \\
+00038 & 23.31 & 26.49 & 23.29 & 24.14 & 24.22 & 31.27 & 31.57 \\
+00039* & 14.94 & 22.80 & 7.09 & 13.87 & 16.50 & 22.49 & 22.55 \\
+00040 & 23.38 & 27.94 & 16.68 & 15.85 & 18.01 & 27.24 & 24.23 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \end{document}

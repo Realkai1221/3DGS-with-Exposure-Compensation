@@ -220,13 +220,15 @@ for n in full:
     print(line)
 
 print("\n=== Right halves of the test photos (the part 3dgs2024_exp is scored on; LPIPS not recomputed)")
-print(f"{'run':16}{'PSNR':>8}{'SSIM':>8}   full-image PSNR")
+std = lambda d: float(np.std(list(d.values()))) if d else float("nan")  # population std, as the notebook's summary
+print(f"{'run':16}{'PSNR':>16}{'SSIM':>18}   full-image PSNR")
 for name, r in runs.items():
     if r["aligned"]:
-        print(f"{name:16}{mean(r['rh_psnr']):8.2f}{mean(r['rh_ssim']):8.4f}   "
+        print(f"{name:16}{mean(r['rh_psnr']):8.2f} +/- {std(r['rh_psnr']):4.2f}{mean(r['rh_ssim']):9.4f} +/- {std(r['rh_ssim']):.4f}   "
               + ("-" if r["half"] else f"{mean(r['per_view']['PSNR']):.2f}"))
         if r["undone_psnr"]:
-            print(f"{'  same, colour transform taken out':40}{mean(r['undone_psnr']):8.2f}{mean(r['undone_ssim']):8.4f}")
+            print(f"{'  same, colour transform taken out':16}{mean(r['undone_psnr']):8.2f} +/- {std(r['undone_psnr']):4.2f}"
+                  f"{mean(r['undone_ssim']):9.4f} +/- {std(r['undone_ssim']):.4f}")
 if "3dgs2024" in runs:
     ref = runs["3dgs2024"]["rh_psnr"]
     for n in [n for n in runs if runs[n]["half"] and runs[n]["aligned"]]:
